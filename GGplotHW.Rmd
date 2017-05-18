@@ -1,0 +1,80 @@
+---
+title: "ggHW"
+author: "jpham916"
+date: "May 16, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+thinshallow = read.table("resthin.shallow.txt", header=T)
+thindeep = read.table("resthin.deep.txt", header=T)
+clim=read.table("sierraclim.txt",header=T)
+
+```
+
+
+I created a bar chart of total annual rain since I was born (1992). I also included a line that showed how much rain Davis,CA received last year which is nearby my home of Sacramento,CA.
+```{r}
+climag = aggregate(rain ~ year, data = clim, sum)
+
+p1 = ggplot(climag, aes(x=year, y=rain)) + geom_bar(stat = "identity", fill= "navyblue") + ggtitle("Annual Rain Totals since June 1992 (My Birth)") + theme(axis.text= element_text(colour="sienna1", size=12))+ scale_x_continuous(limits = c(1992,2013)) + labs(y="Total Annual Rainfall (cm)", x="Year") 
+p1
+
+                                                                                                                                                                                                              
+p1a=p1 + geom_abline(intercept=49.8,slope=0, colour="lightgreen", size=1)
+p1b= p1a + theme(plot.title=element_text(size=13, hjust=0.1), plot.background=element_rect(fill="plum4")) 
+
+p1b
+
+```
+
+Comparing relative sources of waterloss via evaporation and transpiration through plants faceted by decade. I ran a simple linear regression of the total data and plotted the linear regression line on the plot using all data, as well as decade specific plots.
+```{r}
+p2=ggplot(thindeep, aes(x=evap, y=trans))+geom_point(col="blue", shape=24, size=rel(1))
+p2 = p2 + labs(x="Evaporation", y="Transpiration")+ ggtitle("Relative Sources of Waterloss") +geom_abline(intercept=1.79,slope=-2.88, colour="green", size=2) + theme_bw()
+
+
+evaplm <- lm(thindeep$trans ~ thindeep$evap)
+summary(evaplm)
+p2
+p2a= p2+ facet_grid(~scen)
+p2a
+```
+
+
+Average Monthly Biomass with overlay of average monthly temperature max's
+
+```{r}
+thinshallowagg = aggregate(plantc ~ month, data = thinshallow, mean)
+climtemp = aggregate(tmax ~ month, data = clim, mean)
+
+Mergeddata = merge(climtemp,thinshallowagg, by= "month")
+
+scl= 2/22
+  
+p3 = ggplot(Mergeddata, aes(x=as.factor(month), y=plantc)) + geom_bar(stat = "identity", fill= "orange") + ggtitle("Average Plant Biomass by Month with Temperature Averages") + labs(y= "Plant Biomass", x="Month") + geom_smooth(aes(x=month, y = tmax*scl))+theme_light()
+
+ p3                                                                                                                           
+```
+
+Difference in Biomass between thinshallow and thindeep over Time
+
+
+
+```{r}
+thinshallowagg = aggregate(plantc ~ month, data = thinshallow, mean)
+
+  thindeepagg = aggregate(plantc ~ month, data = thindeep, mean)
+  
+  Mergeddata2 = merge(thindeepagg,thinshallowagg, by= "month")
+  
+  
+
+biodiff = ggplot(Mergeddata2, aes(x=month, y=plantc.x)) + geom_ribbon(aes(ymin = plantc.y, ymax = plantc.x), fill="darkgreen") + labs(x = "Month", y= "Plant Biomass", title= "Differences in Plant Biomasses between Shallow and Deep Thinning Methods") + theme( plot.background=element_rect(fill="blue"))
+  biodiff
+```
+
